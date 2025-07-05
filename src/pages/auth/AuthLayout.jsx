@@ -1,6 +1,7 @@
 import { Outlet } from "react-router";
 
 export function AuthLayout() {
+  console.log("hello");
   return (
     <div className="d-flex justify-content-center align-items-center vh-100">
       <div className="w-50 bg-light rounded-3 h-100">
