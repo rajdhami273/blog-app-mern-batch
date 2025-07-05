@@ -41,6 +41,8 @@ export function Login() {
   }
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
+      <h1>Login to your account</h1>
+      <br />
       <Form.Group className="mb-3" controlId="formBasicEmail">
         <Form.Label>Email address</Form.Label>
         <Form.Control
