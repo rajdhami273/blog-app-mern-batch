@@ -1,17 +1,35 @@
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router";
+import axios from "axios";
 
 // components
 import { Card } from "react-bootstrap";
 
+import { setPosts } from "../../redux-app/slices/blogSlice";
+import { useEffect } from "react";
+
 export function BlogListing() {
   const posts = useSelector((state) => state.blog.posts ?? []);
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:3000/api/v1/blogs")
+      .then((res) => {
+        dispatch(setPosts(res.data.blogs));
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, [dispatch]);
+
   return (
     <div className="d-flex flex-wrap gap-3 p-3 justify-content-center">
       {posts.map((post) => (
         <Link
-          key={post._id}
-          to={`/blog/${post._id}`}
+          key={post.id}
+          to={`/blog/${post.id}`}
           className="w-25 text-decoration-none"
         >
           <Card>

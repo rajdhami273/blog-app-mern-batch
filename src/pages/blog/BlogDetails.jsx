@@ -7,7 +7,7 @@ import { Image } from "react-bootstrap";
 export function BlogDetails() {
   const { blogId } = useParams();
   const post = useSelector((state) =>
-    state.blog.posts.find((post) => post._id === blogId)
+    state.blog.posts.find((post) => post.id === blogId)
   );
   return (
     <div className="d-flex flex-column gap-3 align-items-center">
@@ -15,7 +15,8 @@ export function BlogDetails() {
       <div className="p-3 text-center w-100">
         <h1>{post.title}</h1>
         <small className="text-muted">
-          By John Doe on {new Date(post.createdAt).toLocaleDateString()}
+          By {post.author.name} on{" "}
+          {new Date(post.createdAt).toLocaleDateString()}
         </small>
         <hr className="w-100" />
       </div>

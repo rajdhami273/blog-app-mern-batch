@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useNavigate } from "react-router";
 import { useDispatch } from "react-redux";
+import axios from "axios";
 
 // components
 import { Button, Form } from "react-bootstrap";
@@ -22,7 +24,12 @@ const loginSchema = z.object({
 
 export function Login() {
   const dispatch = useDispatch();
+  const [error, setError] = useState(null);
   const { register, handleSubmit, formState } = useForm({
+    defaultValues: {
+      email: "email@email.in",
+      password: "Password@123",
+    },
     resolver: zodResolver(loginSchema),
   });
   const { errors } = formState;
@@ -30,14 +37,18 @@ export function Login() {
   const navigate = useNavigate();
 
   function onSubmit(data) {
-    dispatch(
-      login({
-        _id: "1234123412",
-        name: "Ranjoth Ambani",
-        email: data.email,
+    axios
+      .post("http://localhost:3000/api/v1/auth/login", data)
+      .then((res) => {
+        console.log(res);
+        const { token, user } = res.data;
+        dispatch(login({ token, user }));
+        localStorage.setItem("token", token);
+        navigate("/");
       })
-    );
-    navigate("/");
+      .catch((err) => {
+        setError(err?.response?.data?.message);
+      });
   }
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
@@ -63,6 +74,7 @@ export function Login() {
           {errors.password?.message}
         </Form.Text>
       </Form.Group>
+      {error && <p className="text-danger">{error}</p>}
       <Button variant="primary" type="submit">
         Login
       </Button>

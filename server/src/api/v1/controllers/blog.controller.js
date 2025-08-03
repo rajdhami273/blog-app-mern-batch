@@ -60,10 +60,10 @@ async function createBlog(req, res) {
 async function updateBlogById(req, res) {
   try {
     const { id } = req.params;
-    const { title, content, author } = req.body;
+    const { title, description, author, coverImageUrl } = req.body;
     const blog = await Blog.findByIdAndUpdate(
       id,
-      { title, content, author },
+      { title, description, author, coverImageUrl },
       { new: true }
     );
     res.status(200).json({

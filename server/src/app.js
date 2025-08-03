@@ -1,5 +1,6 @@
 // Homework -> Understand about REST APIs
 const express = require("express");
+const cors = require("cors");
 
 // config
 const config = require("./config/config");
@@ -15,6 +16,9 @@ const app = express();
 
 // connect to MongoDB
 connect();
+
+// cors
+app.use(cors());
 
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded

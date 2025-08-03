@@ -4,6 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
+import axios from "axios";
 
 // actions
 import { addPost, updatePost } from "../../redux-app/slices/blogSlice";
@@ -24,10 +25,8 @@ export function EditCreateBlog() {
   const isEditPage = !!params.blogId;
 
   const post = useSelector((state) =>
-    state.blog.posts.find((post) => post._id === params.blogId)
+    state.blog.posts.find((post) => post.id === params.blogId)
   );
-
-  console.log(post);
 
   const { register, handleSubmit, formState } = useForm({
     resolver: zodResolver(blogSceham),
@@ -45,17 +44,39 @@ export function EditCreateBlog() {
   function onSubmit(data) {
     const newPost = {
       ...data,
-      _id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       authorId: "1234123412",
       isPublished: true,
     };
     if (isEditPage) {
-      dispatch(updatePost({ ...newPost, _id: params.blogId }));
+      axios
+        .patch(`http://localhost:3000/api/v1/blogs/${params.blogId}`, newPost, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
+        .then((res) => {
+          dispatch(updatePost(res.data.blog));
+          navigate("/");
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     } else {
-      dispatch(addPost(newPost));
+      axios
+        .post(`http://localhost:3000/api/v1/blogs`, newPost, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
+        .then((res) => {
+          dispatch(addPost(res.data.blog));
+          navigate("/");
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     }
-    navigate("/");
   }
 
   return (
