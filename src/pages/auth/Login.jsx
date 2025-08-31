@@ -4,13 +4,15 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useNavigate } from "react-router";
 import { useDispatch } from "react-redux";
-import axios from "axios";
 
 // components
 import { Button, Form } from "react-bootstrap";
 
 // actions
 import { login } from "../../redux-app/slices/authSlice";
+
+// utils
+import apiClient from "../../utils/apiClient";
 
 const loginSchema = z.object({
   email: z
@@ -37,10 +39,9 @@ export function Login() {
   const navigate = useNavigate();
 
   function onSubmit(data) {
-    axios
-      .post("http://localhost:3000/api/v1/auth/login", data)
+    apiClient
+      .post("/auth/login", data)
       .then((res) => {
-        console.log(res);
         const { token, user } = res.data;
         dispatch(login({ token, user }));
         localStorage.setItem("token", token);

@@ -7,7 +7,14 @@ function generateToken(userId) {
 }
 
 function verifyToken(token) {
-  return jwt.verify(token, "secret@123@toen_mytoken_$%#!");
+  return jwt.verify(token, "secret@123@toen_mytoken_$%#!", (err, decoded) => {
+    if (err) {
+      return {
+        message: "Token is expired",
+      };
+    }
+    return decoded;
+  });
 }
 
 module.exports = {

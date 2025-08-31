@@ -1,7 +1,18 @@
+import { useEffect } from "react";
 import { Outlet } from "react-router";
+import { useDispatch } from "react-redux";
+
+// actions
+import { logout } from "../../redux-app/slices/authSlice";
 
 export function AuthLayout() {
-  console.log("hello");
+  const dispatch = useDispatch();
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      dispatch(logout());
+    }
+  }, [dispatch]);
   return (
     <div className="d-flex justify-content-center align-items-center vh-100">
       <div className="w-50 bg-light rounded-3 h-100">

@@ -22,6 +22,12 @@ export function Header() {
   const isEditPage = location.pathname.includes("/edit");
   const isBlogDetailsPage = location.pathname.includes("/blog");
 
+  const post = useSelector((state) =>
+    state.blog.posts.find((post) => post.id === params.blogId)
+  );
+
+  const isAuthorized = user?.id === post?.author?.id;
+
   function handleLogout() {
     dispatch(logout());
     navigate("/auth");
@@ -36,7 +42,7 @@ export function Header() {
       </Navbar.Brand>
       <Navbar.Collapse className="justify-content-end">
         <Nav>
-          {isBlogDetailsPage ? (
+          {isBlogDetailsPage && isAuthorized ? (
             <Nav.Link as={Link} to={`/edit/${params.blogId}`}>
               <Button>
                 <i className="bi bi-pencil"></i> Edit
@@ -52,7 +58,7 @@ export function Header() {
           ) : null}
           {user ? (
             <Nav.Link onClick={handleLogout}>
-              <Button>
+              <Button variant="outline-danger">
                 <i className="bi bi-box-arrow-right"></i> Logout
               </Button>
             </Nav.Link>

@@ -4,3 +4,7 @@
   gap: 1rem;
   width: 100%;
 }
+
+.cardImage {
+  height: 200px !important;
+}

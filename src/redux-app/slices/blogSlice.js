@@ -16,9 +16,8 @@ const blogSlice = createSlice({
       state.posts = state.posts.filter((post) => post._id !== action.payload);
     },
     updatePost: (state, action) => {
-      const { _id, ...rest } = action.payload;
-      const postIndex = state.posts.findIndex((post) => post._id === _id);
-      console.log(postIndex);
+      const { id, ...rest } = action.payload;
+      const postIndex = state.posts.findIndex((post) => post.id === id);
       if (postIndex !== -1) {
         state.posts[postIndex] = {
           ...state.posts[postIndex],

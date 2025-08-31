@@ -38,13 +38,29 @@ async function getBlogById(req, res) {
 
 async function createBlog(req, res) {
   try {
-    const { title, description, coverImageUrl } = req.body;
+    const { title, description } = req.body;
+
+    // Handle cover image
+    let coverImageUrl = req.body.coverImageUrl; // fallback to URL if provided
+    console.log(req.file);
+    if (req.file) {
+      // Generate URL for uploaded file
+      coverImageUrl = `/uploads/${req.file.filename}`;
+    }
+
+    if (!coverImageUrl) {
+      return res.status(400).json({
+        message: "Cover image is required",
+      });
+    }
+
     const blog = await Blog.create({
       title,
       description,
       coverImageUrl,
       author: req.user._id,
     });
+
     res.status(201).json({
       message: "Blog created successfully",
       blog,
@@ -60,12 +76,37 @@ async function createBlog(req, res) {
 async function updateBlogById(req, res) {
   try {
     const { id } = req.params;
-    const { title, description, author, coverImageUrl } = req.body;
-    const blog = await Blog.findByIdAndUpdate(
-      id,
-      { title, description, author, coverImageUrl },
-      { new: true }
-    );
+    const { title, description } = req.body;
+    const user = req.user;
+
+    const blog = await Blog.findById(id);
+    if (!blog) {
+      return res.status(404).json({
+        message: "Blog not found",
+      });
+    }
+
+    if (!blog.author.equals(user._id)) {
+      return res.status(403).json({
+        message: "You are not authorized to update this blog",
+      });
+    }
+
+    // Handle cover image update
+    let coverImageUrl = blog.coverImageUrl; // keep existing by default
+    if (req.file) {
+      // New file uploaded
+      coverImageUrl = `/uploads/${req.file.filename}`;
+    } else if (req.body.coverImageUrl) {
+      // URL provided in body
+      coverImageUrl = req.body.coverImageUrl;
+    }
+
+    blog.title = title;
+    blog.description = description;
+    blog.coverImageUrl = coverImageUrl;
+
+    await blog.save();
     res.status(200).json({
       message: "Blog updated successfully",
       blog,
@@ -81,7 +122,14 @@ async function updateBlogById(req, res) {
 async function deleteBlogById(req, res) {
   try {
     const { id } = req.params;
-    const blog = await Blog.findByIdAndDelete(id);
+    const user = req.user;
+    const blog = await Blog.findById(id);
+    if (!blog.author.equals(user._id)) {
+      return res.status(403).json({
+        message: "You are not authorized to delete this blog",
+      });
+    }
+    await Blog.findByIdAndDelete(id);
     if (!blog) {
       return res.status(404).json({
         message: "Blog not found",

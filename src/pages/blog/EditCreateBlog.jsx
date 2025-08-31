@@ -1,82 +1,174 @@
+import { useEffect } from "react";
 import { Button, Form } from "react-bootstrap";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
-import axios from "axios";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
+import "./ReactQuill.css";
 
 // actions
 import { addPost, updatePost } from "../../redux-app/slices/blogSlice";
 
-// schema
-const blogSceham = z.object({
-  title: z.string().min(1, { message: "Title is required" }),
-  description: z.string().min(100, {
-    message: "Description is required and must be at least 100 characters",
-  }),
-  coverImageUrl: z.string().min(1, { message: "Image url is required" }),
-});
+// utils
+import apiClient from "../../utils/apiClient";
+
+// ReactQuill modules and toolbar configuration
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, 4, 5, 6, false] }],
+    [{ font: [] }],
+    [{ size: ["small", false, "large", "huge"] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ color: [] }, { background: [] }],
+    [{ script: "sub" }, { script: "super" }],
+    [{ list: "ordered" }, { list: "bullet" }],
+    [{ indent: "-1" }, { indent: "+1" }],
+    [{ align: [] }],
+    ["blockquote", "code-block"],
+    ["link", "image"],
+    ["clean"],
+  ],
+};
+
+// Alternative simpler configuration (uncomment to use)
+/*
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline"],
+    [{ color: [] }, { background: [] }],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["link"],
+    ["clean"]
+  ],
+};
+*/
+
+const quillFormats = [
+  "header",
+  "font",
+  "size",
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "color",
+  "background",
+  "script",
+  "list",
+  "bullet",
+  "indent",
+  "align",
+  "blockquote",
+  "code-block",
+  "link",
+  "image",
+];
+
+// Create schema function to handle edit vs create mode
+const createBlogSchema = (isEditMode, hasExistingImage) =>
+  z.object({
+    title: z.string().min(1, { message: "Title is required" }),
+    description: z.string().min(100, {
+      message: "Description is required and must be at least 100 characters",
+    }),
+    coverImage:
+      isEditMode && hasExistingImage
+        ? z.instanceof(FileList).optional()
+        : z.instanceof(FileList).refine((files) => files.length > 0, {
+            message: "Cover image is required",
+          }),
+  });
 
 export function EditCreateBlog() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const params = useParams();
   const isEditPage = !!params.blogId;
+  const { blogId } = params;
 
   const post = useSelector((state) =>
-    state.blog.posts.find((post) => post.id === params.blogId)
+    state.blog.posts.find((post) => post.id === blogId)
   );
 
-  const { register, handleSubmit, formState } = useForm({
-    resolver: zodResolver(blogSceham),
-    defaultValues: isEditPage
-      ? post
-      : {
-          title: "",
-          description: "",
-          coverImageUrl: "",
-        },
+  const hasExistingImage = isEditPage && post?.coverImageUrl;
+  const schema = createBlogSchema(isEditPage, hasExistingImage);
+
+  const { register, handleSubmit, formState, reset, control } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      title: "",
+      description: "",
+      coverImage: undefined,
+    },
   });
 
   const { errors } = formState;
 
-  function onSubmit(data) {
-    const newPost = {
-      ...data,
-      createdAt: new Date().toISOString(),
-      authorId: "1234123412",
-      isPublished: true,
-    };
-    if (isEditPage) {
-      axios
-        .patch(`http://localhost:3000/api/v1/blogs/${params.blogId}`, newPost, {
+  async function onSubmit(data) {
+    // Create FormData for file upload
+    const formData = new FormData();
+    formData.append("title", data.title);
+    formData.append("description", data.description);
+
+    // Handle cover image
+    if (data.coverImage && data.coverImage.length > 0) {
+      formData.append("coverImage", data.coverImage[0]);
+    }
+
+    try {
+      if (isEditPage) {
+        const res = await apiClient.patch(`/blogs/${params.blogId}`, formData, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "multipart/form-data",
           },
-        })
-        .then((res) => {
-          dispatch(updatePost(res.data.blog));
-          navigate("/");
-        })
-        .catch((err) => {
-          console.log(err);
         });
-    } else {
-      axios
-        .post(`http://localhost:3000/api/v1/blogs`, newPost, {
+        dispatch(updatePost(res.data.blog));
+        navigate("/");
+      } else {
+        const res = await apiClient.post(`/blogs`, formData, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "multipart/form-data",
           },
-        })
+        });
+        dispatch(addPost(res.data.blog));
+        navigate("/");
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      // You might want to show an error message to the user here
+    }
+  }
+
+  useEffect(() => {
+    if (!post && isEditPage) {
+      apiClient
+        .get(`/blogs/${blogId}`)
         .then((res) => {
           dispatch(addPost(res.data.blog));
-          navigate("/");
         })
         .catch((err) => {
           console.log(err);
         });
     }
+  }, [blogId, dispatch, post, isEditPage]);
+
+  // Reset form with post data when post becomes available
+  useEffect(() => {
+    if (post && isEditPage) {
+      reset({
+        title: post.title || "",
+        description: post.description || "",
+        coverImage: undefined, // File input can't be pre-filled for security reasons
+      });
+    }
+  }, [post, isEditPage, reset]);
+
+  if (isEditPage && !post) {
+    return <div>Loading...</div>;
   }
 
   return (
@@ -92,24 +184,42 @@ export function EditCreateBlog() {
       </Form.Group>
       <Form.Group className="mb-3" controlId="description">
         <Form.Label>Description</Form.Label>
-        <Form.Control
-          type="text"
-          placeholder="Enter description"
-          {...register("description")}
+        <Controller
+          name="description"
+          control={control}
+          render={({ field }) => (
+            <ReactQuill
+              theme="snow"
+              placeholder="Enter description"
+              value={field.value}
+              onChange={field.onChange}
+              modules={quillModules}
+              formats={quillFormats}
+            />
+          )}
         />
         <Form.Text className="text-danger">
           {errors.description?.message}
         </Form.Text>
       </Form.Group>
-      <Form.Group className="mb-3" controlId="imageUrl">
-        <Form.Label>Image url</Form.Label>
+      <Form.Group className="mb-3" controlId="coverImage">
+        <Form.Label>Cover image</Form.Label>
         <Form.Control
-          type="text"
-          placeholder="Enter image url"
-          {...register("coverImageUrl")}
+          type="file"
+          accept="image/*"
+          placeholder="Upload cover image"
+          {...register("coverImage")}
         />
+        {isEditPage && post?.coverImageUrl && (
+          <Form.Text className="text-muted">
+            Current image:{" "}
+            {post.coverImageUrl.startsWith("/uploads/")
+              ? "Uploaded image"
+              : post.coverImageUrl}
+          </Form.Text>
+        )}
         <Form.Text className="text-danger">
-          {errors.coverImageUrl?.message}
+          {errors.coverImage?.message}
         </Form.Text>
       </Form.Group>
       <Button variant="primary" type="submit">

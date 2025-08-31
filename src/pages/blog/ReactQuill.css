@@ -1,0 +1,62 @@
+/* Custom ReactQuill styles */
+.ql-editor {
+  min-height: 200px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Color picker styling */
+.ql-color-picker .ql-picker-label,
+.ql-background .ql-picker-label {
+  border: 1px solid #ccc;
+}
+
+.ql-color-picker .ql-picker-label:hover,
+.ql-background .ql-picker-label:hover {
+  border-color: #06c;
+}
+
+/* Custom color palette */
+.ql-picker.ql-color .ql-picker-options,
+.ql-picker.ql-background .ql-picker-options {
+  width: 252px;
+  padding: 3px 5px;
+}
+
+.ql-picker.ql-color .ql-picker-item,
+.ql-picker.ql-background .ql-picker-item {
+  height: 16px;
+  width: 16px;
+  margin: 2px;
+}
+
+/* Toolbar styling */
+.ql-toolbar.ql-snow {
+  border-top: 1px solid #ccc;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+}
+
+.ql-container.ql-snow {
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Responsive toolbar */
+@media (max-width: 768px) {
+  .ql-toolbar.ql-snow .ql-formats {
+    margin-right: 5px;
+  }
+}
+
+/* Focus state */
+.ql-container.ql-snow:focus-within {
+  border-color: #86b7fe;
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}

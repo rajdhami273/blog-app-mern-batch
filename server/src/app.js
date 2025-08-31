@@ -1,6 +1,7 @@
 // Homework -> Understand about REST APIs
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 // config
 const config = require("./config/config");
@@ -10,6 +11,7 @@ const routes = require("./api/v1/routes");
 
 // database
 const connect = require("./database/mongoConnect");
+const authMiddleware = require("./middlewares/auth.middleware");
 
 // express app
 const app = express();
@@ -20,8 +22,15 @@ connect();
 // cors
 app.use(cors());
 
-app.use(express.json()); // for parsing application/json
-app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+app.use(express.json({ limit: "10mb" })); // for parsing application/json
+app.use(express.urlencoded({ limit: "10mb", extended: true })); // for parsing application/x-www-form-urlencoded
+
+// Serve static files from uploads directory
+app.use(
+  "/uploads",
+  authMiddleware,
+  express.static(path.join(__dirname, "../uploads"))
+);
 
 // health check
 app.get("/", (_, res) => {

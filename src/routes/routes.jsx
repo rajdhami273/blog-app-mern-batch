@@ -15,8 +15,8 @@ import { Register } from "../pages/auth/Register";
 export const routes = (
   <BrowserRouter>
     <Routes>
-      <Route path="auth" Component={AuthLayout}>
-        <Route index Component={Login} />
+      <Route path="/auth" Component={AuthLayout}>
+        <Route path="/auth" Component={Login} />
         <Route path="login" Component={Login} />
         <Route path="register" Component={Register} />
       </Route>
